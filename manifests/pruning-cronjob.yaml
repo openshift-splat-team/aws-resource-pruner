@@ -1,0 +1,29 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: route53-prune
+spec:
+  schedule: '0 /6 * * *'
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: pruner
+              image: image-repo/record-prune:latest
+              volumeMounts:
+              - name: context
+                mountPath: /context
+              - name: credentials
+                mountPath: /credentials
+              env:
+              - name: AWS_SHARED_CREDENTIALS_FILE
+                value: /credentials/.awscred
+          restartPolicy: Never
+          volumes:
+            - name: context
+              persistentVolumeClaim:
+                claimName: record-context
+            - name: credentials
+              secret:
+                secretName: aws-route53-credentials
