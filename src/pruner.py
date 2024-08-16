@@ -1,10 +1,13 @@
 import boto3
+import os
 from datetime import datetime, timedelta
 import json
 
 route53 = boto3.client("route53")
 contextPath="/context/"
-hostedZoneWithARecords="Z0109yyyyyyyyyyyyyy"
+hostedZoneWithARecords=os.environ["HOSTED_ZONE_ID"]
+print("checking hosted zone: ", hostedZoneWithARecords)
+
 def getRecordsFromHostedZone(hostedZone):
     records = route53.list_resource_record_sets(HostedZoneId=hostedZone,MaxItems="500")
     if "ResourceRecordSets" not in records:
