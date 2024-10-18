@@ -9,19 +9,35 @@ hostedZoneWithARecords=os.environ["HOSTED_ZONE_ID"]
 print("checking hosted zone: ", hostedZoneWithARecords)
 
 def getRecordsFromHostedZone(hostedZone):
-    records = route53.list_resource_record_sets(HostedZoneId=hostedZone,MaxItems="500")
-    if "ResourceRecordSets" not in records:
-        print("no records found")
-        return None
-    
-    return records["ResourceRecordSets"]
+    record_slice = []
+    records = route53.list_resource_record_sets(HostedZoneId=hostedZone,MaxItems="300")
+    truncated = False
+    if "IsTruncated" in records:
+        truncated = records["IsTruncated"]
+
+    record_slice = records["ResourceRecordSets"]
+    while truncated:
+        records = route53.list_resource_record_sets(HostedZoneId=hostedZone,MaxItems="300", StartRecordType=records["NextRecordType"], StartRecordName=records["NextRecordName"])
+
+        truncated = False
+        if "IsTruncated" in records:
+            truncated = records["IsTruncated"]
+            
+        if "ResourceRecordSets" not in records:
+            print("no records found")
+            return None
+
+        record_slice = record_slice + records["ResourceRecordSets"]
+    return record_slice
 
 def getHostedZoneRecordState(hostedZone):
     records = getRecordsFromHostedZone(hostedZone)
     if records == None:
         return None
-    recordsOfInterest = [x for x in records if "ci-op-" in x["Name"]]    
-
+    
+    recordsOfInterest = [x for x in records if "ci-op-" in x["Name"] or "ci-ln-" in x["Name"]]    
+    print("found:", len(records), "records of interest:", len(recordsOfInterest))
+    
     recordNameMap = {} 
     for record in recordsOfInterest:
         recordNameMap[record["Name"]] = record
