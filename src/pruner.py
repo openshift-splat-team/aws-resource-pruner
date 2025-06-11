@@ -28,6 +28,7 @@ def getRecordsFromHostedZone(hostedZone):
             return None
 
         record_slice = record_slice + records["ResourceRecordSets"]
+
     return record_slice
 
 def getHostedZoneRecordState(hostedZone):
@@ -121,6 +122,10 @@ def cleanupStaleHostedZones(state, savedState):
 # clean up stale records in a specific hosted zone
 def cleanupStaleHostedZoneRecords(state, savedState):
     staleRecords = getStaleHostedZoneRecords(state, savedState)
+    if len(staleRecords) > 4000:
+        print("max batch size exceeded, truncating to 4000 records")
+        staleRecords = staleRecords[0:4000]
+
     deleteSpecificRecordsInHostedZone(hostedZoneWithARecords,staleRecords, True)
 
 def checkRunBackoff():
