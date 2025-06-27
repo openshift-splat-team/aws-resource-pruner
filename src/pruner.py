@@ -122,11 +122,13 @@ def cleanupStaleHostedZones(state, savedState):
 # clean up stale records in a specific hosted zone
 def cleanupStaleHostedZoneRecords(state, savedState):
     staleRecords = getStaleHostedZoneRecords(state, savedState)
-    if len(staleRecords) > 4000:
-        print("max batch size exceeded, truncating to 4000 records")
-        staleRecords = staleRecords[0:4000]
 
-    deleteSpecificRecordsInHostedZone(hostedZoneWithARecords,staleRecords, True)
+    # process in batches of 100
+    for i in range(0, len(staleRecords), 100):
+        batch = staleRecords[i:i+100]
+        print("deleting batch of " + str(len(batch)) + " records in hosted zone " + hostedZoneWithARecords)
+        deleteSpecificRecordsInHostedZone(hostedZoneWithARecords,batch, True)
+        print("deleted batch of " + str(len(batch)) + " records in hosted zone " + hostedZoneWithARecords)
 
 def checkRunBackoff():
     then = None
